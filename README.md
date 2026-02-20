@@ -20,7 +20,11 @@ Traditional spreadsheet-based analysis fails at the scale of millions of rows. V
 - **Data Visualization**: Matplotlib, Seaborn.
 - **Future Implementation (AI & Web)**: FastAPI (Backend), React (Frontend), Prophet/Scikit-Learn (Predictive Modeling), Docker.
 
-## 📂 Project Architecture
+## �️ Dataset
+
+The dataset used for this project can be found on Kaggle: [Slooze Challenge Data](https://www.kaggle.com/datasets/sloozecareers/slooze-challenge/data)
+
+## �📂 Project Architecture
 
 ```text
 vinolytics/
