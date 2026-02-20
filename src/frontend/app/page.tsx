@@ -1,65 +1,110 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, { useEffect, useState } from "react";
+import ABCSummaryCards from "@/components/ABCSummaryCards";
+import ReorderTable from "@/components/ReorderTable";
+import RevenueChart from "@/components/RevenueChart";
+
+export default function Dashboard() {
+  const [abcData, setAbcData] = useState([]);
+  const [reorderData, setReorderData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Fetch data from our FastAPI backend
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        // Using Promise.all to fetch both endpoints concurrently
+        const [abcRes, reorderRes] = await Promise.all([
+          fetch("http://localhost:8000/api/abc-summary"),
+          fetch("http://localhost:8000/api/reorder-alerts"),
+        ]);
+
+        if (!abcRes.ok || !reorderRes.ok) {
+          throw new Error("Failed to fetch data from VinoLytics API");
+        }
+
+        const abcJson = await abcRes.json();
+        const reorderJson = await reorderRes.json();
+
+        setAbcData(abcJson);
+        setReorderData(reorderJson);
+      } catch (err: any) {
+        console.error("Failed to fetch VinoLytics API:", err);
+        setError("Unable to connect to the backend server. Is FastAPI running on port 8000?");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900 mb-4"></div>
+        <p className="text-slate-500 font-medium">Loading data from warehouse...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-md shadow-sm">
+        <div className="flex items-center">
+          <span className="text-red-500 mr-3 text-xl">⚠️</span>
+          <h3 className="text-red-800 font-medium text-lg">Connection Error</h3>
+        </div>
+        <p className="mt-2 text-red-700">{error}</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="mt-4 bg-red-100 text-red-800 px-4 py-2 rounded font-medium hover:bg-red-200 transition-colors"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="space-y-8">
+      {/* Header Section */}
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900">Inventory Overview</h1>
+        <p className="mt-2 text-slate-600">
+          Real-time insights into inventory performance and critical stock alerts.
+        </p>
+      </div>
+
+      {/* ABC Analysis Section */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-slate-800">ABC Revenue Distribution</h2>
+          <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full border border-slate-200">
+            Based on historical sales
+          </span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <ABCSummaryCards data={abcData} />
+        <RevenueChart data={abcData} />
+      </section>
+
+      {/* Reorder Alerts Section */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-slate-800">Critical Reorder Alerts</h2>
+          <span className="text-sm font-medium text-red-600 bg-red-50 px-3 py-1 rounded-full border border-red-100">
+            {reorderData.length} Action Items
+          </span>
         </div>
-      </main>
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <ReorderTable data={reorderData} />
+        </div>
+        
+        {/* TODO: Add a chart down here later maybe for monthly trends */}
+      </section>
     </div>
   );
 }
