@@ -60,7 +60,10 @@ vinolytics/
 ### 5. AI & Predictive Modeling
 - **Demand Forecasting**: Trained Prophet time-series models on historical transactional data to forecast 30-day demand for top-selling inventory items, complete with upper and lower confidence intervals.
 
-### 6. Full-Stack Dashboard
+### 6. Advanced Supply Chain Analytics
+- **Safety Stock Simulation**: Implemented a dual-uncertainty safety stock model considering both demand and lead-time variance. Includes a "What-If" shock simulator assessing the financial capital impact of severe supplier unreliability (e.g., +50% variance).
+
+### 7. Full-Stack Dashboard
 - Built a modern, responsive React (Next.js) web application that visualizes all backend data points concurrently.
 - Interactive charts (Recharts) and data tables provide an at-a-glance view of the entire supply chain's health.
 

@@ -39,14 +39,14 @@ export default function CapitalTrapsScatter({ data }: { data: any[] }) {
           <ZAxis type="category" dataKey="description" name="Brand" />
           <Tooltip 
             cursor={{strokeDasharray: '3 3'}}
-            formatter={(value: any, name: string) => {
+            formatter={(value: any, name?: string) => {
               if (name === 'Capital Tied Up') {
-                return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value as number);
+                return [new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value as number), name];
               }
               if (name === 'Days to Sell') {
-                return `${(value as number).toFixed(1)} days`;
+                return [`${(value as number).toFixed(1)} days`, name];
               }
-              return value;
+              return [value, name];
             }}
           />
           <Scatter name="Brands" data={data} fill="#a855f7" fillOpacity={0.6} />

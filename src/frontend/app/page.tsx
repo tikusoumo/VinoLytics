@@ -8,6 +8,7 @@ import MarginBleedersChart from "@/components/MarginBleedersChart";
 import CapitalTrapsScatter from "@/components/CapitalTrapsScatter";
 import InventoryOptimizationTable from "@/components/InventoryOptimizationTable";
 import DemandForecastChart from "@/components/DemandForecastChart";
+import SafetyStockSimulator from "@/components/SafetyStockSimulator";
 
 export default function Dashboard() {
   const [abcData, setAbcData] = useState([]);
@@ -16,6 +17,7 @@ export default function Dashboard() {
   const [capitalData, setCapitalData] = useState([]);
   const [inventoryOptData, setInventoryOptData] = useState([]);
   const [demandForecastData, setDemandForecastData] = useState(null);
+  const [safetyStockData, setSafetyStockData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,16 +27,17 @@ export default function Dashboard() {
       try {
         setLoading(true);
         // Using Promise.all to fetch all endpoints concurrently
-        const [abcRes, reorderRes, marginRes, capitalRes, inventoryRes, forecastRes] = await Promise.all([
+        const [abcRes, reorderRes, marginRes, capitalRes, inventoryRes, forecastRes, safetyStockRes] = await Promise.all([
           fetch("http://localhost:8000/api/abc-summary"),
           fetch("http://localhost:8000/api/reorder-alerts"),
           fetch("http://localhost:8000/api/margin-bleeders"),
           fetch("http://localhost:8000/api/capital-traps"),
           fetch("http://localhost:8000/api/inventory-optimization"),
           fetch("http://localhost:8000/api/demand-forecast"),
+          fetch("http://localhost:8000/api/safety-stock-simulation"),
         ]);
 
-        if (!abcRes.ok || !reorderRes.ok || !marginRes.ok || !capitalRes.ok || !inventoryRes.ok || !forecastRes.ok) {
+        if (!abcRes.ok || !reorderRes.ok || !marginRes.ok || !capitalRes.ok || !inventoryRes.ok || !forecastRes.ok || !safetyStockRes.ok) {
           throw new Error("Failed to fetch data from VinoLytics API");
         }
 
@@ -44,6 +47,7 @@ export default function Dashboard() {
         const capitalJson = await capitalRes.json();
         const inventoryOptJson = await inventoryRes.json();
         const forecastJson = await forecastRes.json();
+        const safetyStockJson = await safetyStockRes.json();
 
         setAbcData(abcJson);
         setReorderData(reorderJson);
@@ -51,6 +55,7 @@ export default function Dashboard() {
         setCapitalData(capitalJson);
         setInventoryOptData(inventoryOptJson);
         setDemandForecastData(forecastJson);
+        setSafetyStockData(safetyStockJson);
       } catch (err: any) {
         console.error("Failed to fetch VinoLytics API:", err);
         setError("Unable to connect to the backend server. Is FastAPI running on port 8000?");
@@ -145,6 +150,9 @@ export default function Dashboard() {
           <span className="text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
             Powered by Prophet & EOQ Models
           </span>
+        </div>
+        <div className="grid grid-cols-1 gap-6 mb-6">
+          <SafetyStockSimulator data={safetyStockData} />
         </div>
         <div className="grid grid-cols-1 gap-6 mb-6">
           <DemandForecastChart data={demandForecastData} />

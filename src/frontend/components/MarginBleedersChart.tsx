@@ -34,7 +34,7 @@ export default function MarginBleedersChart({ data }: { data: any[] }) {
             width={120}
           />
           <Tooltip 
-            formatter={(value: any, name: string) => [
+            formatter={(value: any, name?: string) => [
               new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value as number),
               name === 'true_margin' ? 'True Margin' : name
             ]}
