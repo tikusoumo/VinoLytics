@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from database import get_db
 import pandas as pd
+import numpy as np
+from prophet import Prophet
 
 router = APIRouter()
 
@@ -120,3 +122,217 @@ def get_abc_summary(db: Session = Depends(get_db)):
     ).reset_index()
     
     return summary_df.to_dict(orient="records")
+
+@router.get("/margin-bleeders")
+def get_margin_bleeders(db: Session = Depends(get_db)):
+    query_margin = """
+    WITH brand_sales AS (
+        SELECT 
+            Brand, 
+            MAX(Description) as Description,
+            AVG(SalesPrice) as avg_sales_price,
+            AVG(ExciseTax) as avg_excise_tax
+        FROM Sales
+        GROUP BY Brand
+    ),
+    po_freight AS (
+        SELECT 
+            PONumber, 
+            SUM(Freight) / NULLIF(SUM(Quantity), 0) as freight_per_unit_po
+        FROM InvoicePurchases
+        GROUP BY PONumber
+    ),
+    brand_purchases AS (
+        SELECT 
+            p.Brand,
+            AVG(p.PurchasePrice) as avg_purchase_price,
+            AVG(pf.freight_per_unit_po) as avg_freight_per_unit
+        FROM Purchases p
+        LEFT JOIN po_freight pf ON p.PONumber = pf.PONumber
+        GROUP BY p.Brand
+    )
+    SELECT 
+        s.Brand as brand,
+        s.Description as description,
+        s.avg_sales_price,
+        s.avg_excise_tax,
+        p.avg_purchase_price,
+        COALESCE(p.avg_freight_per_unit, 0) as avg_freight_per_unit
+    FROM brand_sales s
+    JOIN brand_purchases p ON s.Brand = p.Brand
+    """
+    
+    df_margin = pd.read_sql(query_margin, db.bind)
+    
+    df_margin['gross_margin'] = df_margin['avg_sales_price'] - df_margin['avg_purchase_price']
+    df_margin['true_margin'] = df_margin['gross_margin'] - df_margin['avg_excise_tax'] - df_margin['avg_freight_per_unit']
+    
+    df_margin = df_margin[df_margin['avg_sales_price'] > 1.0].copy()
+    bleeders = df_margin.sort_values('true_margin').head(10)
+    
+    bleeders = bleeders.fillna(0)
+    return bleeders[['brand', 'description', 'avg_sales_price', 'gross_margin', 'true_margin']].to_dict(orient="records")
+
+@router.get("/capital-traps")
+def get_capital_traps(db: Session = Depends(get_db)):
+    query_ccc = """
+    WITH sales_dates AS (
+        SELECT 
+            Brand, 
+            AVG(EXTRACT(EPOCH FROM SalesDate::timestamp)) as avg_sales_epoch
+        FROM Sales
+        WHERE SalesDate IS NOT NULL
+        GROUP BY Brand
+    ),
+    purchase_dates AS (
+        SELECT 
+            Brand, 
+            AVG(EXTRACT(EPOCH FROM ReceivingDate::timestamp)) as avg_rec_epoch,
+            AVG(PurchasePrice * Quantity) as avg_capital_outlay
+        FROM Purchases
+        WHERE ReceivingDate IS NOT NULL
+        GROUP BY Brand
+    )
+    SELECT 
+        s.Brand as brand,
+        (s.avg_sales_epoch - p.avg_rec_epoch) / 86400.0 AS avg_days_to_sell,
+        p.avg_capital_outlay as capital_tied_up
+    FROM sales_dates s
+    JOIN purchase_dates p ON s.Brand = p.Brand
+    """
+    
+    df_ccc = pd.read_sql(query_ccc, db.bind)
+    
+    df_ccc = df_ccc[(df_ccc['avg_days_to_sell'] > 0) & (df_ccc['avg_days_to_sell'] < 365)].copy()
+    
+    query_desc = "SELECT Brand as brand, MAX(Description) as description FROM Sales GROUP BY Brand"
+    df_desc = pd.read_sql(query_desc, db.bind)
+    
+    df_ccc = df_ccc.merge(df_desc, on='brand', how='left')
+    
+    median_days = df_ccc['avg_days_to_sell'].median()
+    median_capital = df_ccc['capital_tied_up'].median()
+    
+    traps = df_ccc[(df_ccc['avg_days_to_sell'] > median_days) & (df_ccc['capital_tied_up'] > median_capital)]
+    traps = traps.sort_values(by=['capital_tied_up', 'avg_days_to_sell'], ascending=[False, False]).head(30)
+    
+    traps = traps.fillna(0)
+    return traps[['brand', 'description', 'avg_days_to_sell', 'capital_tied_up']].to_dict(orient="records")
+
+@router.get("/inventory-optimization")
+def get_inventory_optimization(db: Session = Depends(get_db)):
+    extraction_query = """
+    WITH sales_agg AS (
+        SELECT 
+            brand, 
+            MAX(description) AS description, 
+            SUM(salesquantity) AS annual_demand,
+            SUM(salesquantity) / 365.0 AS avg_daily_sales
+        FROM sales
+        GROUP BY brand
+    ),
+    prices AS (
+        SELECT 
+            brand,
+            MAX(purchaseprice) AS purchase_price
+        FROM purchaseprices
+        GROUP BY brand
+    ),
+    lead_times AS (
+        SELECT 
+            brand,
+            AVG(EXTRACT(DAY FROM (receivingdate::timestamp - podate::timestamp))) AS avg_lead_time_days
+        FROM purchases
+        WHERE podate IS NOT NULL 
+          AND receivingdate IS NOT NULL 
+          AND receivingdate >= podate
+        GROUP BY brand
+    ),
+    inventory AS (
+        SELECT 
+            brand,
+            SUM(onhand) AS current_on_hand
+        FROM endinginventory
+        GROUP BY brand
+    )
+    SELECT 
+        s.brand,
+        s.description,
+        s.annual_demand,
+        s.avg_daily_sales,
+        p.purchase_price,
+        COALESCE(l.avg_lead_time_days, 14) AS avg_lead_time_days,
+        COALESCE(i.current_on_hand, 0) AS current_on_hand
+    FROM sales_agg s
+    LEFT JOIN prices p ON s.brand = p.brand
+    LEFT JOIN lead_times l ON s.brand = l.brand
+    LEFT JOIN inventory i ON s.brand = i.brand
+    WHERE s.annual_demand > 0 AND p.purchase_price > 0
+    """
+    
+    opt_df = pd.read_sql(extraction_query, db.bind)
+    
+    # Business Variables
+    S = 45.0  # Cost per order
+    h = 0.20  # Holding cost rate (20%)
+    safety_stock_days = 14
+    
+    # Calculate Annual Holding Cost (H) and EOQ
+    opt_df['holding_cost_unit'] = opt_df['purchase_price'] * h
+    opt_df['eoq'] = np.sqrt((2 * opt_df['annual_demand'] * S) / opt_df['holding_cost_unit'])
+    opt_df['eoq'] = np.ceil(opt_df['eoq']).astype(int)
+    
+    # Calculate ROP
+    opt_df['safety_stock_units'] = opt_df['avg_daily_sales'] * safety_stock_days
+    opt_df['lead_time_demand'] = opt_df['avg_daily_sales'] * opt_df['avg_lead_time_days']
+    opt_df['rop'] = opt_df['lead_time_demand'] + opt_df['safety_stock_units']
+    opt_df['rop'] = np.ceil(opt_df['rop']).astype(int)
+    
+    opt_df['action_required'] = np.where(opt_df['current_on_hand'] < opt_df['rop'], 'Reorder Now', 'Stock Adequate')
+    at_risk_df = opt_df[opt_df['action_required'] == 'Reorder Now'].sort_values(by='annual_demand', ascending=False).head(10)
+    
+    at_risk_df = at_risk_df.fillna(0)
+    return at_risk_df[['brand', 'description', 'current_on_hand', 'rop', 'eoq', 'action_required']].to_dict(orient="records")
+
+@router.get("/demand-forecast")
+def get_demand_forecast(db: Session = Depends(get_db)):
+    top_brand_query = """
+        SELECT 
+            brand,
+            MAX(description) as description,
+            SUM(salesquantity) as total_volume_sold
+        FROM sales
+        GROUP BY brand
+        ORDER BY total_volume_sold DESC
+        LIMIT 1;
+    """
+    top_brand_df = pd.read_sql(top_brand_query, db.bind)
+    if top_brand_df.empty:
+        return {"error": "No sales data found"}
+        
+    target_brand_id = top_brand_df['brand'].iloc[0]
+    target_brand_name = top_brand_df['description'].iloc[0]
+    
+    sales_query = f"""
+        SELECT 
+            salesdate::date as ds,
+            SUM(salesquantity) as y
+        FROM sales
+        WHERE brand = '{target_brand_id}'
+        GROUP BY salesdate::date
+        ORDER BY salesdate::date ASC;
+    """
+    
+    df = pd.read_sql(sales_query, db.bind)
+    df['ds'] = pd.to_datetime(df['ds'])
+    
+    model = Prophet(yearly_seasonality=True, weekly_seasonality=True, daily_seasonality=False)
+    model.fit(df)
+    
+    future = model.make_future_dataframe(periods=30, freq='D')
+    forecast = model.predict(future)
+    
+    # We return the historical and forecasted data
+    forecast['ds'] = forecast['ds'].dt.strftime('%Y-%m-%d')
+    res = forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(60).to_dict(orient="records")
+    return {"brand_name": target_brand_name, "forecast": res}
