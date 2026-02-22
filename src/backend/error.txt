@@ -1,0 +1,68 @@
+SQL Error: Execution failed on sql '
+WITH brand_sales AS (
+    SELECT 
+        Brand, 
+        MAX(Description) AS Description,
+        SUM(SalesDollars) AS total_revenue,
+        SUM(SalesDollars - (SalesQuantity * PurchasePrice)) AS gross_profit,
+        AVG(EXTRACT(EPOCH FROM SalesDate::timestamp)) AS avg_sales_epoch
+    FROM Sales
+    WHERE SalesDate IS NOT NULL
+    GROUP BY Brand
+),
+brand_purchases AS (
+    SELECT 
+        Brand,
+        MAX(Description) AS Description,
+        SUM(PurchasePrice * Quantity) AS total_capital_outlay,
+        AVG(EXTRACT(EPOCH FROM ReceivingDate::timestamp)) AS avg_rec_epoch
+    FROM Purchases
+    WHERE ReceivingDate IS NOT NULL
+    GROUP BY Brand
+)
+SELECT
+    COALESCE(s.Brand, p.Brand) as brand,
+    COALESCE(s.Description, p.Description) as description,
+    COALESCE(s.total_revenue, 0) as total_revenue,
+    COALESCE(s.gross_profit, 0) as gross_profit,
+    COALESCE(p.total_capital_outlay, 0) as total_capital_outlay,
+    (s.avg_sales_epoch - p.avg_rec_epoch) / 86400.0 AS avg_days_to_sell
+FROM brand_sales s
+FULL OUTER JOIN brand_purchases p ON s.Brand = p.Brand
+': (psycopg2.errors.UndefinedColumn) column "purchaseprice" does not exist
+LINE 7:         SUM(SalesDollars - (SalesQuantity * PurchasePrice)) ...
+                                                    ^
+
+[SQL: 
+WITH brand_sales AS (
+    SELECT 
+        Brand, 
+        MAX(Description) AS Description,
+        SUM(SalesDollars) AS total_revenue,
+        SUM(SalesDollars - (SalesQuantity * PurchasePrice)) AS gross_profit,
+        AVG(EXTRACT(EPOCH FROM SalesDate::timestamp)) AS avg_sales_epoch
+    FROM Sales
+    WHERE SalesDate IS NOT NULL
+    GROUP BY Brand
+),
+brand_purchases AS (
+    SELECT 
+        Brand,
+        MAX(Description) AS Description,
+        SUM(PurchasePrice * Quantity) AS total_capital_outlay,
+        AVG(EXTRACT(EPOCH FROM ReceivingDate::timestamp)) AS avg_rec_epoch
+    FROM Purchases
+    WHERE ReceivingDate IS NOT NULL
+    GROUP BY Brand
+)
+SELECT
+    COALESCE(s.Brand, p.Brand) as brand,
+    COALESCE(s.Description, p.Description) as description,
+    COALESCE(s.total_revenue, 0) as total_revenue,
+    COALESCE(s.gross_profit, 0) as gross_profit,
+    COALESCE(p.total_capital_outlay, 0) as total_capital_outlay,
+    (s.avg_sales_epoch - p.avg_rec_epoch) / 86400.0 AS avg_days_to_sell
+FROM brand_sales s
+FULL OUTER JOIN brand_purchases p ON s.Brand = p.Brand
+]
+(Background on this error at: https://sqlalche.me/e/20/f405)

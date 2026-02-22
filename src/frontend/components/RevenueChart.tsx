@@ -19,9 +19,11 @@ export default function RevenueChart({ data }: { data: any[] }) {
   };
 
   return (
-    <div className="h-72 w-full mt-8 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-      <h3 className="text-sm font-semibold text-slate-600 mb-4 px-2">Revenue Contribution by Class</h3>
-      <ResponsiveContainer width="100%" height="85%">
+    <div className="h-80 w-full bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+      <div className="mb-3">
+        <h3 className="text-lg font-semibold text-slate-800">Revenue Contribution by Category</h3>
+      </div>
+      <ResponsiveContainer width="100%" height="90%">
         <BarChart
           data={chartData}
           margin={{ top: 20, right: 30, left: 20, bottom: 5 }}

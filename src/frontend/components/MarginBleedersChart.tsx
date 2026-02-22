@@ -7,8 +7,8 @@ export default function MarginBleedersChart({ data }: { data: any[] }) {
   if (!data || data.length === 0) return null;
 
   return (
-    <div className="h-96 w-full bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-      <div className="mb-4">
+    <div className="h-80 w-full bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+      <div className="mb-3">
         <h3 className="text-lg font-semibold text-slate-800">Top 10 Margin Bleeders</h3>
         <p className="text-sm text-slate-500">Products with the lowest True Margin after excise taxes and freight.</p>
       </div>

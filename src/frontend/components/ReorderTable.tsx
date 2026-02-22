@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, ArrowUpDown } from 'lucide-react';
+import { Search, ArrowUpDown, Maximize2, Minimize2 } from 'lucide-react';
 
 export default function ReorderTable({ data }: { data: any[] }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState("current_on_hand");
   const [sortDirection, setSortDirection] = useState("asc");
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // TODO: add pagination here later, this table will get massive when we scale.
   // For now displaying everything that comes from the backend (top 50)
@@ -43,8 +44,8 @@ export default function ReorderTable({ data }: { data: any[] }) {
   };
 
   return (
-    <div className="flex flex-col">
-      <div className="p-4 border-b border-slate-200 bg-white flex justify-between items-center bg-slate-50/50">
+    <div className="flex flex-col h-full">
+      <div className="p-4 border-b border-slate-100 bg-white flex justify-between items-center">
         <div className="relative w-72">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-4 w-4 text-slate-400" />
@@ -57,13 +58,25 @@ export default function ReorderTable({ data }: { data: any[] }) {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="text-sm font-medium text-slate-500">
-          Showing {sortedData.length} item(s)
+        <div className="flex items-center gap-4">
+          <div className="text-sm font-medium text-slate-500">
+            Showing {sortedData.length} item(s)
+          </div>
+          <button 
+             onClick={() => setIsExpanded(!isExpanded)}
+             className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-slate-100 px-3 py-1.5 rounded-md transition-colors border border-slate-200"
+          >
+            {isExpanded ? (
+              <><Minimize2 className="h-3.5 w-3.5" /> Collapse</>
+            ) : (
+              <><Maximize2 className="h-3.5 w-3.5" /> Expand</>
+            )}
+          </button>
         </div>
       </div>
-      <div className="overflow-x-auto">
+      <div className={`overflow-auto relative transition-all duration-300 ${isExpanded ? 'max-h-[800px]' : 'max-h-80'}`}>
         <table className="min-w-full divide-y divide-slate-200 text-sm">
-          <thead className="bg-slate-50">
+          <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm">
             <tr>
               <th scope="col" className="px-6 py-4 text-left font-semibold text-slate-600 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('description')}>
                 <div className="flex items-center">

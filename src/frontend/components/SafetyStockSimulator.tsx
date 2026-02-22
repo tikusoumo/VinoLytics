@@ -40,8 +40,8 @@ export default function SafetyStockSimulator({ data }: SafetyStockProps) {
   };
 
   return (
-    <div className="w-full bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-      <div className="flex flex-row justify-between items-center mb-6">
+    <div className="w-full bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+      <div className="flex flex-row justify-between items-center mb-4">
         <div>
           <h2 className="text-lg font-semibold text-slate-800">Safety Stock Shock Simulator</h2>
           <p className="text-slate-500 text-sm mt-1">Impact of a 50% increase in Supplier Lead Time Variance</p>
@@ -51,11 +51,11 @@ export default function SafetyStockSimulator({ data }: SafetyStockProps) {
         </div>
       </div>
       
-      <div className="h-[400px] w-full">
+      <div className="h-[300px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}
-            margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+            margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
             <XAxis 

@@ -7,8 +7,8 @@ export default function CapitalTrapsScatter({ data }: { data: any[] }) {
   if (!data || data.length === 0) return null;
 
   return (
-    <div className="h-96 w-full bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-      <div className="mb-4">
+    <div className="h-80 w-full bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+      <div className="mb-3">
         <h3 className="text-lg font-semibold text-slate-800">Working Capital Traps</h3>
         <p className="text-sm text-slate-500">Brands with high capital tied up and long days-to-sell.</p>
       </div>

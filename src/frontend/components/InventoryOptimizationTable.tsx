@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { TrendingUp, Package, AlertTriangle, CheckCircle } from "lucide-react";
+import React, { useState } from "react";
+import { TrendingUp, Package, AlertTriangle, CheckCircle, Maximize2, Minimize2 } from "lucide-react";
 
 interface OptimizationItem {
   brand: string;
@@ -17,6 +17,8 @@ interface InventoryOptimizationTableProps {
 }
 
 export default function InventoryOptimizationTable({ data }: InventoryOptimizationTableProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   if (!data || data.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
@@ -31,7 +33,7 @@ export default function InventoryOptimizationTable({ data }: InventoryOptimizati
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full">
-      <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+      <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
         <div>
           <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
             <Package className="h-5 w-5 text-indigo-500" />
@@ -41,10 +43,20 @@ export default function InventoryOptimizationTable({ data }: InventoryOptimizati
             Top items requiring reorder based on EOQ & ROP analysis
           </p>
         </div>
+        <button 
+           onClick={() => setIsExpanded(!isExpanded)}
+           className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-slate-100 px-3 py-1.5 rounded-md transition-colors border border-slate-200"
+        >
+          {isExpanded ? (
+            <><Minimize2 className="h-3.5 w-3.5" /> Collapse</>
+          ) : (
+            <><Maximize2 className="h-3.5 w-3.5" /> Expand</>
+          )}
+        </button>
       </div>
-      <div className="overflow-x-auto flex-1">
+      <div className={`overflow-auto flex-1 relative transition-all duration-300 ${isExpanded ? 'max-h-[800px]' : 'max-h-80'}`}>
         <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-slate-50 text-slate-600 font-medium">
+          <thead className="bg-slate-50 text-slate-600 font-medium sticky top-0 z-10 shadow-sm">
             <tr>
               <th className="px-6 py-4">Brand</th>
               <th className="px-6 py-4">Item Name</th>

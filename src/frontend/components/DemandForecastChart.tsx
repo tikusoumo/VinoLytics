@@ -76,8 +76,8 @@ export default function DemandForecastChart({ data }: DemandForecastChartProps) 
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-      <div className="flex justify-between items-start mb-6">
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+      <div className="flex justify-between items-start mb-4">
         <div>
           <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-indigo-500" />
@@ -89,7 +89,7 @@ export default function DemandForecastChart({ data }: DemandForecastChartProps) 
         </div>
       </div>
 
-      <div className="h-[350px] w-full">
+      <div className="h-[300px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={formattedData}
