@@ -1,10 +1,10 @@
-# 🍷 VinoLytics: Intelligent Inventory & Supply Chain Platform
+#  VinoLytics: Intelligent Inventory & Supply Chain Platform
 
 VinoLytics is a full-stack, AI-powered analytics and optimization engine built for high-volume retail wine and spirits operations. It processes millions of transactional records to extract actionable business insights, optimize supply chain logistics, and forecast future demand.
 
 Starting as an exploratory data analysis pipeline, VinoLytics has evolved into a comprehensive internal dashboard providing predictive and prescriptive analytics.
 
-## 🎯 Business Objectives
+##  Business Objectives
 
 Traditional spreadsheet-based analysis fails at the scale of millions of rows. VinoLytics leverages SQL databases, Python-based data science libraries, and modern web frameworks to solve core retail challenges:
 
@@ -13,7 +13,7 @@ Traditional spreadsheet-based analysis fails at the scale of millions of rows. V
 - **Supply Chain Efficiency**: Evaluate vendor performance through historical Lead Time Analysis.
 - **Demand Forecasting**: Utilize time-series modeling (Prophet) to predict future product demand based on seasonal sales data.
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 - **Database & Storage**: PostgreSQL (Dockerized, optimized for large-scale relational joins and aggregations)
 - **Data Engineering & Analytics**: Python, Pandas, SQLAlchemy, NumPy, Seaborn
@@ -21,11 +21,11 @@ Traditional spreadsheet-based analysis fails at the scale of millions of rows. V
 - **Backend API**: FastAPI, Uvicorn (REST endpoints for frontend consumption)
 - **Frontend Dashboard**: React, Next.js, TailwindCSS, Recharts, Lucide Icons
 
-## 📊 Dataset
+##  Dataset
 
 The original dataset used for this project can be found on Kaggle: [Slooze Challenge Data](https://www.kaggle.com/datasets/sloozecareers/slooze-challenge/data)
 
-## 📂 Project Architecture
+##  Project Architecture
 
 ```text
 vinolytics/
@@ -39,7 +39,7 @@ vinolytics/
 └── README.md
 ```
 
-## 🚀 Analytics Methodology & Features
+##  Analytics Methodology & Features
 
 ### 1. Data Architecture & ETL
 - Designed a normalized relational database schema in PostgreSQL.
@@ -69,7 +69,7 @@ vinolytics/
 
 ---
 
-## 💻 Local Setup Instructions
+##  Local Setup Instructions
 
 1. **Clone the repository:**
    ```bash
@@ -113,3 +113,4 @@ vinolytics/
 
 ---
 *Developed by Soumojit Datta*
+
