@@ -21,10 +21,11 @@ export default function CapitalTrapsScatter({ data }: { data: any[] }) {
             type="number" 
             dataKey="avg_days_to_sell" 
             name="Days to Sell" 
-            unit=" days" 
             axisLine={false} 
             tickLine={false}
             tick={{fontSize: 12, fill: '#64748b'}}
+            tickFormatter={(value) => `${Math.round(value)} days`}
+            domain={['dataMin - 10', 'dataMax + 10']}
           />
           <YAxis 
             type="number" 
@@ -35,6 +36,7 @@ export default function CapitalTrapsScatter({ data }: { data: any[] }) {
             tickLine={false}
             tick={{fontSize: 12, fill: '#64748b'}}
             width={80}
+            domain={['dataMin - 1000', 'dataMax + 1000']}
           />
           <ZAxis type="category" dataKey="description" name="Brand" />
           <Tooltip 
@@ -44,7 +46,7 @@ export default function CapitalTrapsScatter({ data }: { data: any[] }) {
                 return [new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value as number), name];
               }
               if (name === 'Days to Sell') {
-                return [`${(value as number).toFixed(1)} days`, name];
+                return [`${(value as number).toFixed(0)} days`, name];
               }
               return [value, name];
             }}

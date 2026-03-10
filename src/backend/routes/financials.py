@@ -93,7 +93,8 @@ def get_capital_traps(db: Session = Depends(get_db), start_date: str = Query(Non
     SELECT 
         COALESCE(p.Brand, s.Brand) as brand,
         (s.avg_sales_epoch - p.avg_rec_epoch) / 86400.0 AS avg_days_to_sell,
-        p.avg_capital_outlay as capital_tied_up
+        p.avg_capital_outlay as capital_tied_up,
+        p.avg_rec_epoch
     FROM purchase_dates p
     LEFT JOIN sales_dates s ON s.Brand = p.Brand
     """
@@ -103,8 +104,9 @@ def get_capital_traps(db: Session = Depends(get_db), start_date: str = Query(Non
     if df_ccc.empty:
         return []
         
-    df_ccc['avg_days_to_sell'] = df_ccc['avg_days_to_sell'].fillna(365)
-    df_ccc['avg_days_to_sell'] = df_ccc['avg_days_to_sell'].apply(lambda x: 365 if x <= 0 else x)
+    df_ccc['days_since_purchase'] = (1483142400 - df_ccc['avg_rec_epoch']) / 86400.0
+    df_ccc['avg_days_to_sell'] = df_ccc['avg_days_to_sell'].fillna(df_ccc['days_since_purchase'])
+    df_ccc['avg_days_to_sell'] = df_ccc['avg_days_to_sell'].apply(lambda x: abs(x) if x < 0 else (365 if x == 0 else x))
     
     query_desc = "SELECT Brand as brand, MAX(Description) as description FROM Purchases GROUP BY Brand"
     df_desc = pd.read_sql(query_desc, db.bind)
